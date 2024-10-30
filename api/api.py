@@ -19,11 +19,11 @@ class Recipe(db.Model):
     servings = db.Column(db.Integer, nullable=False)
     def __repr__(self):
         return f"Recipe(id={self.id}, title='{self.title}', description='{self.description}', servings={self.servings})"
-with app.app_context():
-    db.create_all()
-    db.session.commit()
+# with app.app_context():
+#    db.create_all()
+#    db.session.commit()
 
-
+@app.route("/api/recipes", methods=["GET"])
 def get_all_recipes():     
     recipes = Recipe.query.all()     
     recipe_list = []     
@@ -38,6 +38,44 @@ def get_all_recipes():
             'servings': recipe.servings         
         })     
     return jsonify(recipe_list)
+
+
+@app.route("/api/recipes", methods=["POST"])
+def add_recipe():
+    data = request.get_json()
+    required_fields = ['title', 'ingredients', 'instructions', 'servings', 'description', 'image_url']
+    for field in required_fields:
+        if field not in data or data[field] == "":
+            return jsonify({'error': f"Missing required field: '{field}'"}), 400
+    new_recipe = Recipe(
+        title=data['title'],
+        ingredients=data['ingredients'],
+        instructions=data['instructions'],
+        servings=data['servings'],
+        description=data['description'],
+        image_url=data['image_url']
+    )
+
+    
+
+
+    db.session.add(new_recipe)
+    db.session.commit() 
+
+
+    new_recipe_data = {
+        'id': new_recipe.id,
+        'title': new_recipe.title,
+        'ingredients': new_recipe.ingredients,
+        'instructions': new_recipe.instructions,
+        'servings': new_recipe.servings,
+        'description': new_recipe.description,
+        'image_url': new_recipe.image_url
+    }
+
+
+    return jsonify({'message': 'Recipe added successfully!', "recipe": new_recipe_data})
+
 
 
 if __name__ == '__main__':
